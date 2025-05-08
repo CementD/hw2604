@@ -1,6 +1,4 @@
-﻿using System.Net.Sockets;
-
-namespace Task1
+﻿namespace Task1
 {
     class Program
     {
@@ -8,7 +6,7 @@ namespace Task1
         static object locker = new object();
         static bool collapse = false;
 
-        static void Main()
+        static async void Main()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             CancellationToken token = cancellationTokenSource.Token;
@@ -18,29 +16,25 @@ namespace Task1
             for (int i = 0; i < 5; i++)
             {
                 int unitId = i + 1;
-                Task task = Task.Run(() => UnitWork(unitId, token));
-                unitTasks.Add(task);
+                unitTasks.Add(Task.Run(() => UnitWorkAsync(unitId, token)));
             }
 
-            Thread.Sleep(5000);
+            await Task.Delay(5000);
             Console.WriteLine("\nMine collapse! Units come back to camp...\n");
             collapse = true;
 
-            Thread.Sleep(5000);
+            await Task.Delay(5000);
             collapse = false;
             Console.WriteLine("\nMine is safe! Units come back to work...\n");
 
-            foreach (Task task in unitTasks)
-            {
-                task.Wait();
-            }
+            await Task.WhenAll(unitTasks);
 
             Console.WriteLine("\nMining is finished!");
             cancellationTokenSource.Cancel();
             Console.ReadKey();
         }
 
-        static void UnitWork(int id, CancellationToken token)
+        static async Task UnitWorkAsync(int id, CancellationToken token)
         {
             Random rnd = new Random();
 
@@ -49,11 +43,11 @@ namespace Task1
                 if (collapse)
                 {
                     Console.WriteLine($"[Unit {id}] Collapse! Wait...");
-                    Thread.Sleep(5000);
+                    await Task.Delay(5000, token);
                     continue;
                 }
 
-                Thread.Sleep(rnd.Next(500, 1500));
+                await Task.Delay(rnd.Next(500, 1500), token);
 
                 int mined = 0;
 
@@ -77,4 +71,5 @@ namespace Task1
         }
     }
 }
+
 
